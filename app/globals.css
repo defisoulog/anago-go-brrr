@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+
+/* =========================
+   ROOT THEME
+   ========================= */
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Optional dark-mode swap, but we're mostly dark anyway */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #000000;
+    --foreground: #ffffff;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =========================
+   ANIMATIONS
+   ========================= */
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeUp 250ms ease-out forwards;
+}
+
+.fade-up.delay-1 {
+  animation-delay: 0.1s;
+}
+.fade-up.delay-2 {
+  animation-delay: 0.2s;
+}
+.fade-up.delay-3 {
+  animation-delay: 0.3s;
+}
+.fade-up.delay-4 {
+  animation-delay: 0.4s;
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   BUTTON STYLES
+   ========================= */
+
+/* Base for all pills */
+.cta-pill,
+.secondary-pill {
+  @apply inline-flex items-center justify-center rounded-full border border-white/18
+    bg-black/80 px-8 py-3 text-xs font-semibold uppercase tracking-[0.18em]
+    text-white shadow-[0_0_22px_rgba(0,0,0,0.8)] backdrop-blur-md
+    transition-colors transition-transform duration-150 ease-out
+    hover:bg-white hover:text-black hover:shadow-[0_0_26px_rgba(255,255,255,0.9)]
+    active:scale-[0.97] hover:scale-[1.02];
+}
+
+/* Main CTAs (around hero, main actions) */
+.cta-pill {
+  @apply text-sm sm:text-[0.85rem] md:text-base px-10 py-3.5;
+}
+
+/* Smaller link pills (bottom social links) */
+.secondary-pill {
+  @apply text-[0.7rem] sm:text-[0.75rem] px-6 py-2.5;
+  min-width: 220px;       /* keep X / Buy / X row visually even */
+  text-align: center;
+}
+
