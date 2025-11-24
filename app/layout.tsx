@@ -17,9 +17,10 @@ export const metadata: Metadata = {
   description:
     "Official $ANAGO hub — Meme Maker, Arcade, Manifesto, and the Dog of Monad.",
   icons: {
-    icon: "/logos/printr-logo.png", // or your real favicon path
+    icon: "/favicon.ico", // Next.js default placeholder
   },
 };
+
 
 
 export default function RootLayout({
