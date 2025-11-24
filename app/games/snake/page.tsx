@@ -3,23 +3,22 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 
-const GRID_SIZE = 20; // 20x20 grid
+const GRID_SIZE = 20; 
 const CELL_SIZE = 16;
-const CANVAS_SIZE = GRID_SIZE * CELL_SIZE; // 320x320
+const CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
 
 type Direction = "up" | "down" | "left" | "right";
 type GameState = "ready" | "playing" | "gameover";
 
 type Cell = { x: number; y: number };
 
-const STEP_MS = 120; // snake speed (ms per move)
+const STEP_MS = 120;
 
-// Colors – purple + pink glitch
 const BG_COLOR = "#05010A";
 const GRID_COLOR = "rgba(122,63,255,0.18)";
-const SNAKE_HEAD_COLOR = "#F472FF"; // pink/purple
+const SNAKE_HEAD_COLOR = "#F472FF";
 const SNAKE_BODY_COLOR = "rgba(122,63,255,0.9)";
-const FOOD_COLOR = "#FF6BD5"; // bright pink
+const FOOD_COLOR = "#FF6BD5";
 const SCORE_TEXT_COLOR = "#FFFFFF";
 const ACCENT_TEXT_COLOR = "#C4B5FD";
 
@@ -70,14 +69,15 @@ const SnakePage: React.FC = () => {
     };
 
     const handleDirectionChange = (newDir: Direction) => {
-      // prevent 180° turns
       if (direction === "up" && newDir === "down") return;
       if (direction === "down" && newDir === "up") return;
       if (direction === "left" && newDir === "right") return;
       if (direction === "right" && newDir === "left") return;
+
       nextDirection = newDir;
     };
 
+    // KEYBOARD CONTROLS
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "ArrowUp" || e.code === "KeyW") {
         handleDirectionChange("up");
@@ -100,16 +100,40 @@ const SnakePage: React.FC = () => {
       }
     };
 
-    const handlePointerDown = () => {
-      // mobile: tap to start / restart (swipes later if we want)
-      if (gameState === "gameover") {
-        resetGame();
+    // 🟣 MOBILE SWIPE CONTROLS
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const handlePointerDown = (evt: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      touchStartX = evt.clientX - rect.left;
+      touchStartY = evt.clientY - rect.top;
+
+      if (gameState === "gameover") resetGame();
+      else startGameIfNeeded();
+    };
+
+    const handlePointerUp = (evt: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const dx = (evt.clientX - rect.left) - touchStartX;
+      const dy = (evt.clientY - rect.top) - touchStartY;
+
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      if (absX < 20 && absY < 20) return;
+
+      if (absX > absY) {
+        if (dx > 0) handleDirectionChange("right");
+        else handleDirectionChange("left");
       } else {
-        startGameIfNeeded();
+        if (dy > 0) handleDirectionChange("down");
+        else handleDirectionChange("up");
       }
     };
 
     canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointerup", handlePointerUp);
     window.addEventListener("keydown", handleKeyDown);
 
     const step = () => {
@@ -125,7 +149,6 @@ const SnakePage: React.FC = () => {
       if (direction === "left") newHead.x -= 1;
       if (direction === "right") newHead.x += 1;
 
-      // wall collision
       if (
         newHead.x < 0 ||
         newHead.x >= GRID_SIZE ||
@@ -136,22 +159,19 @@ const SnakePage: React.FC = () => {
         return;
       }
 
-      // self collision
       if (snake.some((c) => c.x === newHead.x && c.y === newHead.y)) {
         gameState = "gameover";
         return;
       }
 
-      // move snake
       snake = [newHead, ...snake];
 
-      // food
       if (newHead.x === food.x && newHead.y === food.y) {
         score += 1;
         if (score > bestScore) bestScore = score;
         food = randomFood(snake);
       } else {
-        snake.pop(); // remove tail
+        snake.pop();
       }
     };
 
@@ -166,28 +186,23 @@ const SnakePage: React.FC = () => {
         accumulator -= STEP_MS;
       }
 
-      // BACKGROUND
       ctx.fillStyle = BG_COLOR;
       ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-      // PURPLE GRID
       ctx.strokeStyle = GRID_COLOR;
       ctx.lineWidth = 1;
       for (let i = 0; i <= GRID_SIZE; i++) {
-        // vertical
         ctx.beginPath();
         ctx.moveTo(i * CELL_SIZE + 0.5, 0);
         ctx.lineTo(i * CELL_SIZE + 0.5, CANVAS_SIZE);
         ctx.stroke();
 
-        // horizontal
         ctx.beginPath();
         ctx.moveTo(0, i * CELL_SIZE + 0.5);
         ctx.lineTo(CANVAS_SIZE, i * CELL_SIZE + 0.5);
         ctx.stroke();
       }
 
-      // SUBTLE PINK GLITCH LINES
       ctx.strokeStyle = "rgba(255,107,213,0.18)";
       ctx.lineWidth = 2;
       const glitchY =
@@ -197,7 +212,6 @@ const SnakePage: React.FC = () => {
       ctx.lineTo(CANVAS_SIZE, glitchY);
       ctx.stroke();
 
-      // FOOD (pink glowing square)
       ctx.shadowColor = "rgba(255,107,213,0.8)";
       ctx.shadowBlur = 12;
       ctx.fillStyle = FOOD_COLOR;
@@ -209,29 +223,21 @@ const SnakePage: React.FC = () => {
       );
       ctx.shadowBlur = 0;
 
-      // SNAKE
       snake.forEach((segment, idx) => {
         const px = segment.x * CELL_SIZE;
         const py = segment.y * CELL_SIZE;
 
-        if (idx === 0) {
-          // head
-          ctx.fillStyle = SNAKE_HEAD_COLOR;
-        } else {
-          ctx.fillStyle = SNAKE_BODY_COLOR;
-        }
+        if (idx === 0) ctx.fillStyle = SNAKE_HEAD_COLOR;
+        else ctx.fillStyle = SNAKE_BODY_COLOR;
 
-        // body block
         ctx.fillRect(px + 1, py + 1, CELL_SIZE - 2, CELL_SIZE - 2);
 
-        // slight inner highlight
         if (idx === 0) {
           ctx.fillStyle = "rgba(255,255,255,0.25)";
           ctx.fillRect(px + 4, py + 4, CELL_SIZE - 10, CELL_SIZE - 10);
         }
       });
 
-      // SCORE TEXT
       ctx.fillStyle = SCORE_TEXT_COLOR;
       ctx.font = "14px monospace";
       ctx.textAlign = "left";
@@ -239,7 +245,6 @@ const SnakePage: React.FC = () => {
       ctx.textAlign = "right";
       ctx.fillText(`BEST: ${bestScore}`, CANVAS_SIZE - 8, 18);
 
-      // STATE OVERLAYS
       ctx.textAlign = "center";
       ctx.font = "13px monospace";
 
@@ -249,7 +254,7 @@ const SnakePage: React.FC = () => {
         ctx.font = "11px monospace";
         ctx.fillStyle = ACCENT_TEXT_COLOR;
         ctx.fillText(
-          "Arrows / WASD to start",
+          "Tap or Swipe to start",
           CANVAS_SIZE / 2,
           CANVAS_SIZE / 2 + 12
         );
@@ -272,7 +277,7 @@ const SnakePage: React.FC = () => {
         );
         ctx.fillStyle = ACCENT_TEXT_COLOR;
         ctx.fillText(
-          "Tap or press Space to restart",
+          "Tap or Swipe to restart",
           CANVAS_SIZE / 2,
           CANVAS_SIZE / 2 + 30
         );
@@ -287,13 +292,13 @@ const SnakePage: React.FC = () => {
       window.cancelAnimationFrame(animationFrameId);
       window.removeEventListener("keydown", handleKeyDown);
       canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointerup", handlePointerUp);
     };
   }, []);
 
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-4">
       <div className="max-w-md w-full flex flex-col items-center gap-4">
-        {/* Back to arcade */}
         <div className="w-full flex justify-start">
           <Link
             href="/games"
@@ -340,8 +345,8 @@ const SnakePage: React.FC = () => {
 
         <p className="text-xs text-center text-zinc-400">
           Controls:{" "}
-          <span className="text-purple-300">Arrows / WASD</span> ·
-          Tap screen to start / restart.
+          <span className="text-purple-300">Arrows / WASD / Swipe</span> ·
+          Tap or swipe to start / restart.
         </p>
       </div>
     </main>
@@ -349,3 +354,4 @@ const SnakePage: React.FC = () => {
 };
 
 export default SnakePage;
+
