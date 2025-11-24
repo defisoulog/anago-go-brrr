@@ -54,6 +54,9 @@ const DogBomberPage: React.FC = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // 🔧 Important for mobile: prevent scroll/zoom gestures on canvas
+    canvas.style.touchAction = "none";
+
     let animationFrameId: number;
     let lastTime = 0;
 
@@ -270,7 +273,7 @@ const DogBomberPage: React.FC = () => {
       }
     };
 
-    // ====== INPUT ======
+    // ====== INPUT: KEYBOARD ======
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "ArrowUp" || e.code === "KeyW") {
         e.preventDefault();
@@ -290,7 +293,9 @@ const DogBomberPage: React.FC = () => {
       }
     };
 
+    // ====== INPUT: TOUCH / POINTER (MOBILE) ======
     const handlePointerDown = (evt: PointerEvent) => {
+      if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
       const cx =
         ((evt.clientX - rect.left) / rect.width) * CANVAS_WIDTH;
@@ -567,7 +572,7 @@ const DogBomberPage: React.FC = () => {
         );
         ctx.fillStyle = "#C4B5FD";
         ctx.fillText(
-          "Move: Arrows / WASD / Tap · Bomb: Space / Enter / Tap on dog",
+          "Move: tap around dog · Bomb: tap on dog (or Space / Enter)",
           CANVAS_WIDTH / 2,
           GRID_TOP - 8
         );
@@ -686,7 +691,7 @@ const DogBomberPage: React.FC = () => {
         <p className="text-xs text-center text-zinc-400">
           Controls:{" "}
           <span className="text-purple-300">
-            Arrows / WASD to move · Space/Enter to bomb · Tap to move / bomb
+            Arrows / WASD to move · Space/Enter to bomb · Tap around dog to move, tap on dog to bomb
           </span>
         </p>
       </div>
@@ -695,3 +700,4 @@ const DogBomberPage: React.FC = () => {
 };
 
 export default DogBomberPage;
+
